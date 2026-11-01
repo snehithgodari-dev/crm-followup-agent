@@ -1,0 +1,16 @@
+flask>=3
+fastapi>=0.110
+uvicorn>=0.35
+requests>=2.31
+sqlalchemy>=2
+pydantic>=2,<3
+python-dotenv>=1,<2
+pypdf>=4
+reportlab>=4
+openpyxl>=3.1
+groq>=0.9
+langgraph>=0.6,<1
+langchain>=0.3,<2
+langchain-groq>=0.3,<1
+mcp>=2,<3
+google-adk
