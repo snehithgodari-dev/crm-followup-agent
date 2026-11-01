@@ -1,5 +1,3 @@
-# crm-followup-agent
-AI-powered CRM for quotation-to-cash follow-ups: LLM document extraction, payment reminders and a chatbot (Flask, FastAPI, LangGraph, MCP, Google ADK)
 # CRM Follow-Up Agent
 
 AI-powered quotation-to-cash CRM. It keeps customers, quotations, purchase orders, deliveries, invoices and payments in one place, reads PO and invoice PDFs with an LLM, chases overdue payments by email, and lets you ask questions in plain English through a chatbot.
@@ -82,7 +80,7 @@ python import_excel.py        # loads sample.xlsx into the database
 
 ```bash
 python backend.py             # FastAPI on http://127.0.0.1:8001
-python mcp_server.py          # MCP server on http://127.0.0.1:8000  (LangGraph agent only)
+python mcp_server.py          # MCP server on http://127.0.0.1:8000  (needed by the LangGraph agent only)
 python ui.py                  # Flask UI on http://127.0.0.1:5000
 ```
 
@@ -101,24 +99,34 @@ Open <http://127.0.0.1:5000>.
 ## Project structure
 
 ```text
-.
-├── ui.py                  Flask web app
-├── templates/             Jinja pages (dashboard, quotation, PO, delivery, invoice, payment, chatbot)
-├── static/                style.css, fonts
-├── backend.py             FastAPI app (REST API)
-├── services/              Quotation, PO, delivery, invoice, payment, reminder, follow-up logic
-├── documents/             Extraction schemas, PDF extractor, validators
-├── database/              SQLAlchemy models and session
-├── agent.py               Chat agent (LangGraph or ADK, depending on branch)
-├── mcp_server.py          MCP server exposing CRM tools
-├── mcp_client.py          MCP client used by the LangGraph agent
-├── tools.py               CRM tools used by the ADK agent
-├── import_excel.py        Sample data loader
+crm-followup-agent/
+├── ui.py                    Flask web app (port 5000)
+├── backend.py               FastAPI app (port 8001); its /chat endpoint calls agent.run_agent
+├── agent.py                 Chat agent v1: LangGraph + Groq, talks to the MCP server
+├── mcp_server.py            MCP server exposing CRM tools (port 8000)
+├── mcp_client.py            MCP client used by agent.py
+├── tools.py                 13 in-process CRM tools used by the ADK agent
+├── import_excel.py          Loads sample.xlsx into the database
+├── crm_adk_agent/           Chat agent v2: Google ADK (Gemini)
+│   ├── __init__.py
+│   └── agent.py
+├── database/                SQLAlchemy models and session, seed script, early invoice/PO helpers
+├── documents/               PDF text extraction, LLM schemas, validators, extraction samples (JSON)
+├── services/                Quotation, PO, delivery, invoice, payment, reminder, follow-up logic
+├── templates/               Jinja pages (dashboard, quotation, PO, delivery, invoice, payment, chatbot)
+├── static/                  style.css and fonts/DejaVuSans.ttf
+├── data/                    SQLite database is created here (crm.db, not committed)
+├── docs/                    Presentation and IEEE report
 ├── sample.xlsx, sample_po.pdf, sample_invoice.pdf
-└── requirements.txt
+├── requirements.txt, .env.example, .gitignore
+└── README.md
 ```
 
+The `test_*.py` files inside `database/`, `documents/` and `services/` are small manual scripts that print results; they contain no assertions.
 
+### Choosing the chat agent
+
+`backend.py` imports `run_agent` from the top-level `agent.py`, which is the LangGraph + MCP version. To use the Google ADK version instead, set `GOOGLE_API_KEY`, and replace the top-level `agent.py` with `crm_adk_agent/agent.py`. Its `run_agent` is asynchronous, so check how `backend.py` calls it (it currently runs `run_agent` in a worker thread).
 
 ## Known limitations
 
@@ -135,4 +143,6 @@ Automatic email scheduling, payment-delay prediction, WhatsApp reminders, role-b
 ## Contributing
 
 Issues and pull requests are welcome. Please open an issue first for large changes.
+
+
 
